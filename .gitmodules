@@ -1,0 +1,6 @@
+[submodule "contracts/zora-minter/lib/forge-std"]
+	path = contracts/zora-minter/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "contracts/zora-minter/lib/solady"]
+	path = contracts/zora-minter/lib/solady
+	url = https://github.com/Vectorized/solady

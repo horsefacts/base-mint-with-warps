@@ -1,55 +1,89 @@
-import { FrameRequest, getFrameMessage, getFrameHtmlResponse } from '@coinbase/onchainkit';
+import { FrameRequest, getFrameMessage } from '@coinbase/onchainkit';
 import { kv } from '@vercel/kv';
 import { NextRequest, NextResponse } from 'next/server';
 import { NEXT_PUBLIC_URL } from '../../config';
-import { getAddressButtons } from '../../lib/helpers';
+import { getAddressButtons } from '../../lib/addresses';
+import signMintData from '../../lib/signMint';
+import { allowedOrigin } from '../../lib/origin';
+import { getFrameHtml } from '../../lib/getFrameHtml';
+import { errorResponse, mintResponse } from '../../lib/responses';
+import { Session } from '../../lib/types';
 
 async function getResponse(req: NextRequest): Promise<NextResponse> {
   const body: FrameRequest = await req.json();
-  const { isValid, message } = await getFrameMessage(body, { neynarApiKey: process.env.NEYNAR_API_KEY });
+  const { isValid, message } = await getFrameMessage(body, {
+    neynarApiKey: process.env.NEYNAR_API_KEY,
+  });
 
-  if (isValid) {
+  if (isValid && allowedOrigin(message)) {
     if (message.button === 1) {
       const buttons = getAddressButtons(message.interactor);
       return new NextResponse(
-        getFrameHtmlResponse({
+        getFrameHtml({
           buttons,
           image: `${NEXT_PUBLIC_URL}/api/images/select?date=${Date.now()}`,
           post_url: `${NEXT_PUBLIC_URL}/api/confirm`,
         }),
       );
     }
+
     const isActive = message.raw.action.interactor.active_status === 'active';
     const fid = message.interactor.fid;
-    if (isActive) {
-      const { address } = (await kv.get(`session:${fid}`)) as { address: string };
-      // Initiate tx
-      // Store tx hash in session
-      return new NextResponse(
-        getFrameHtmlResponse({
-          buttons: [
-            {
-              label: 'Transaction',
-              action: 'link',
-              target: `https://basescan.org/address/${address}`,
-            },
-          ],
-          image: `${NEXT_PUBLIC_URL}/api/images/success?address=${address}&date=${Date.now()}`,
+    let session = ((await kv.get(`session:${fid}`)) ?? {}) as Session;
+
+    if (isActive && session?.address) {
+      const { address } = session;
+      const sig = await signMintData({
+        to: address,
+        tokenId: 1,
+        fid,
+      });
+      const res = await fetch('https://frame.syndicate.io/api/mint', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          Authorization: `Bearer ${process.env.SYNDICATE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          frameTrustedData: body.trustedData.messageBytes,
+          args: [address, 1, fid, sig],
         }),
-      );
+      });
+      if (res.status === 200) {
+        const {
+          success,
+          data: { transactionId },
+        } = await res.json();
+        if (success) {
+          session = { ...session, transactionId };
+          await kv.set(`session:${fid}`, session);
+          const res = await fetch(
+            `https://frame.syndicate.io/api/transaction/${transactionId}/hash`,
+            {
+              headers: {
+                'content-type': 'application/json',
+                Authorization: `Bearer ${process.env.SYNDICATE_API_KEY}`,
+              },
+            },
+          );
+          if (res.status === 200) {
+            return new NextResponse(
+              getFrameHtml({
+                buttons: [
+                  {
+                    label: '🔄 Check status',
+                  },
+                ],
+                post_url: `${NEXT_PUBLIC_URL}/api/check`,
+                image: `${NEXT_PUBLIC_URL}/api/images/check?date=${Date.now()}`,
+              }),
+            );
+          }
+        }
+      }
+      return errorResponse();
     } else {
-      return new NextResponse(
-        getFrameHtmlResponse({
-          buttons: [
-            {
-              label: 'Mint',
-              action: 'mint',
-              target: 'eip155:8453:0xf569a12768a050eab250aa3cc71d53564ce6e349:1',
-            },
-          ],
-          image: `${NEXT_PUBLIC_URL}/giraffe.webp`,
-        }),
-      );
+      return mintResponse();
     }
   } else return new NextResponse('Unauthorized', { status: 401 });
 }
