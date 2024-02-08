@@ -9,5 +9,3 @@ export async function GET(req: NextRequest) {
 
   return new ImageResponse(<Card message={`Mint to ${address}?`} />, CARD_DIMENSIONS);
 }
-
-export const dynamic = 'force-dynamic';

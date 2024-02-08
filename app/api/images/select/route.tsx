@@ -8,5 +8,3 @@ export async function GET() {
     CARD_DIMENSIONS,
   );
 }
-
-export const dynamic = 'force-dynamic';
