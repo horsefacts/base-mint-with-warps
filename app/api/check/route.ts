@@ -6,6 +6,7 @@ import { kv } from '@vercel/kv';
 import { getFrameHtml } from '../../lib/getFrameHtml';
 import { Session } from '../../lib/types';
 import { errorResponse, mintResponse } from '../../lib/responses';
+import { getAddressButtons } from '../../lib/addresses';
 
 async function getResponse(req: NextRequest): Promise<NextResponse> {
   const body: FrameRequest = await req.json();
@@ -19,8 +20,24 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
     if (isActive) {
       const fid = message.interactor.fid;
       const session = ((await kv.get(`session:${fid}`)) ?? {}) as Session;
-      const { address, transactionId } = session;
+      const { address, transactionId, checks } = session;
+      const retries = checks ?? 0;
+      if (retries > 2) {
+        await kv.set(`session:${fid}`, { address });
+        return new NextResponse(
+          getFrameHtml({
+            buttons: [
+              {
+                label: '🔄 Check status',
+              },
+            ],
+            post_url: `${NEXT_PUBLIC_URL}/api/retry`,
+            image: `${NEXT_PUBLIC_URL}/api/images/check?date=${Date.now()}`,
+          }),
+        );
+      }
       if (transactionId) {
+        await kv.set(`session:${fid}`, { ...session, checks: retries + 1 });
         const res = await fetch(
           `https://frame.syndicate.io/api/transaction/${transactionId}/hash`,
           {
