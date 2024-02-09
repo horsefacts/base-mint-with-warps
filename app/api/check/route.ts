@@ -6,6 +6,7 @@ import { kv } from '@vercel/kv';
 import { getFrameHtml } from '../../lib/getFrameHtml';
 import { Session } from '../../lib/types';
 import { errorResponse, mintResponse } from '../../lib/responses';
+import signMintData from '../../lib/signMint';
 
 async function getResponse(req: NextRequest): Promise<NextResponse> {
   const body: FrameRequest = await req.json();
@@ -18,22 +19,60 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
 
     if (isActive) {
       const fid = message.interactor.fid;
-      const session = ((await kv.get(`session:${fid}`)) ?? {}) as Session;
+      let session = ((await kv.get(`session:${fid}`)) ?? {}) as Session;
       const { address, transactionId, checks } = session;
       const retries = checks ?? 0;
-      if (retries > 2) {
-        await kv.set(`session:${fid}`, { address });
-        return new NextResponse(
-          getFrameHtml({
-            buttons: [
-              {
-                label: '🔄 Check status',
-              },
-            ],
-            post_url: `${NEXT_PUBLIC_URL}/api/retry`,
-            image: `${NEXT_PUBLIC_URL}/api/images/check`,
+      if (retries > 2 && session.address) {
+        const { address } = session;
+        const sig = await signMintData({
+          to: address,
+          tokenId: 1,
+          fid,
+        });
+        const res = await fetch('https://frame.syndicate.io/api/mint', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            Authorization: `Bearer ${process.env.SYNDICATE_API_KEY}`,
+          },
+          body: JSON.stringify({
+            frameTrustedData: body.trustedData.messageBytes,
+            args: [address, 1, fid, sig],
           }),
-        );
+        });
+        if (res.status === 200) {
+          const {
+            success,
+            data: { transactionId },
+          } = await res.json();
+          if (success) {
+            session = { ...session, transactionId };
+            await kv.set(`session:${fid}`, session);
+            const res = await fetch(
+              `https://frame.syndicate.io/api/transaction/${transactionId}/hash`,
+              {
+                headers: {
+                  'content-type': 'application/json',
+                  Authorization: `Bearer ${process.env.SYNDICATE_API_KEY}`,
+                },
+              },
+            );
+            if (res.status === 200) {
+              return new NextResponse(
+                getFrameHtml({
+                  buttons: [
+                    {
+                      label: '🔄 Check status',
+                    },
+                  ],
+                  post_url: `${NEXT_PUBLIC_URL}/api/check`,
+                  image: `${NEXT_PUBLIC_URL}/api/images/check`,
+                }),
+              );
+            }
+          }
+        }
+        return errorResponse();
       }
       if (transactionId) {
         await kv.set(`session:${fid}`, { ...session, checks: retries + 1 });
