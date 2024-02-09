@@ -6,4 +6,4 @@ export const CARD_DIMENSIONS = {
   width: 800,
   height: 800,
 };
-export const TOKEN_IMAGE = `${NEXT_PUBLIC_URL}/horse.png`;
+export const TOKEN_IMAGE = 'https://remote-image.decentralized-content.com/image?url=https%3A%2F%2Fipfs.decentralized-content.com%2Fipfs%2Fbafybeiee62xpjut5t27owzi4bltt4hurc26mqfzoljl57fckfec37pv6li&w=1920&q=75';
