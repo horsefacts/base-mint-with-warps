@@ -14,7 +14,7 @@ export function Card({ message, image }: { message: string; image?: string }) {
         ...CARD_DIMENSIONS,
       }}
     >
-      <img style={{ width: '100%', height: '100%', marginTop: '-212px' }} src={imageSrc} />
+      <img style={{ width: '100%', height: '100%', marginTop: "-212px"}} src={image} />
       {message && (
         <div
           style={{
