@@ -109,7 +109,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
                     target: `https://basescan.org/tx/${transactionHash}`,
                   },
                 ],
-                image: `${NEXT_PUBLIC_URL}/api/images/success?address=${address}&date=${Date.now()}`,
+                image: `${NEXT_PUBLIC_URL}/api/images/success?address=${address}`,
               }),
             );
           } else {

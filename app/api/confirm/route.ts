@@ -30,7 +30,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
       return new NextResponse(
         getFrameHtml({
           buttons: [{ label: '⬅️ Back' }, { label: '✅ Mint' }],
-          image: `${NEXT_PUBLIC_URL}/api/images/confirm?address=${address}&date=${Date.now()}`,
+          image: `${NEXT_PUBLIC_URL}/api/images/confirm?address=${address}`,
           post_url: `${NEXT_PUBLIC_URL}/api/relay`,
         }),
       );

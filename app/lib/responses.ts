@@ -5,7 +5,7 @@ import { getFrameHtml } from './getFrameHtml';
 export function errorResponse() {
   return new NextResponse(
     getFrameHtml({
-      image: `${NEXT_PUBLIC_URL}/api/images/error?date=${Date.now()}`,
+      image: `${NEXT_PUBLIC_URL}/api/images/error`,
     }),
   );
 }
@@ -20,7 +20,7 @@ export async function mintResponse() {
           target: `eip155:8453:${ZORA_COLLECTION_ADDRESS}:${ZORA_TOKEN_ID}`,
         },
       ],
-      image: `${NEXT_PUBLIC_URL}/api/images/inactive?date=${Date.now()}`,
+      image: `${NEXT_PUBLIC_URL}/api/images/inactive`,
     }),
   );
 }
