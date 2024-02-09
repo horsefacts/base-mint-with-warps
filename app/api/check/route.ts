@@ -24,8 +24,8 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
       const totalChecks = checks ?? 0;
       const totalRetries = retries ?? 0;
 
-      // If we've retried 5 times, give up
-      if (totalRetries > 5) {
+      // If we've retried 3 times, give up
+      if (totalRetries > 2) {
         return errorResponse();
       }
 
