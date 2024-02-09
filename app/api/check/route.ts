@@ -20,9 +20,17 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
     if (isActive) {
       const fid = message.interactor.fid;
       let session = ((await kv.get(`session:${fid}`)) ?? {}) as Session;
-      const { address, transactionId, checks } = session;
-      const retries = checks ?? 0;
-      if (retries > 2 && session.address) {
+      const { address, transactionId, checks, retries } = session;
+      const totalChecks = checks ?? 0;
+      const totalRetries = retries ?? 0;
+
+      // If we've retried 5 times, give up
+      if (totalRetries > 5) {
+        return errorResponse();
+      }
+
+      // If we've checked 3 times, try to mint again
+      if (totalChecks > 2 && session.address) {
         const { address } = session;
         const sig = await signMintData({
           to: address,
@@ -46,7 +54,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
             data: { transactionId },
           } = await res.json();
           if (success) {
-            session = { ...session, transactionId };
+            session = { ...session, transactionId, retries: totalRetries + 1 };
             await kv.set(`session:${fid}`, session);
             const res = await fetch(
               `https://frame.syndicate.io/api/transaction/${transactionId}/hash`,
@@ -74,8 +82,9 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
         }
         return errorResponse();
       }
+      // If we have a transactionId, check the status
       if (transactionId) {
-        await kv.set(`session:${fid}`, { ...session, checks: retries + 1 });
+        await kv.set(`session:${fid}`, { ...session, checks: totalChecks + 1 });
         const res = await fetch(
           `https://frame.syndicate.io/api/transaction/${transactionId}/hash`,
           {

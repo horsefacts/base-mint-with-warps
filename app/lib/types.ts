@@ -5,4 +5,5 @@ export interface Session {
   transactionId?: string;
   transactionHash?: string;
   checks?: number;
+  retries?: number;
 }
