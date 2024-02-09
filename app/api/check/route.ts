@@ -54,7 +54,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
             data: { transactionId },
           } = await res.json();
           if (success) {
-            session = { ...session, transactionId, retries: totalRetries + 1 };
+            session = { ...session, transactionId, checks: 0, retries: totalRetries + 1 };
             await kv.set(`session:${fid}`, session);
             const res = await fetch(
               `https://frame.syndicate.io/api/transaction/${transactionId}/hash`,
