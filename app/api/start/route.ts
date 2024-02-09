@@ -37,7 +37,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
                 target: `eip155:8453:${ZORA_COLLECTION_ADDRESS}:${ZORA_TOKEN_ID}`,
               },
             ],
-            image: `${NEXT_PUBLIC_URL}/api/images/claimed?date=${Date.now()}`,
+            image: `${NEXT_PUBLIC_URL}/api/images/claimed`,
           }),
         );
       } else if (transactionId) {
@@ -50,7 +50,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
               },
             ],
             post_url: `${NEXT_PUBLIC_URL}/api/check`,
-            image: `${NEXT_PUBLIC_URL}/api/images/check?date=${Date.now()}`,
+            image: `${NEXT_PUBLIC_URL}/api/images/check`,
           }),
         );
       } else {
@@ -58,7 +58,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
         return new NextResponse(
           getFrameHtml({
             buttons,
-            image: `${NEXT_PUBLIC_URL}/api/images/select?date=${Date.now()}`,
+            image: `${NEXT_PUBLIC_URL}/api/images/select`,
             post_url: `${NEXT_PUBLIC_URL}/api/confirm`,
           }),
         );

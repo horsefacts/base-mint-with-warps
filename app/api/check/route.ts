@@ -6,7 +6,6 @@ import { kv } from '@vercel/kv';
 import { getFrameHtml } from '../../lib/getFrameHtml';
 import { Session } from '../../lib/types';
 import { errorResponse, mintResponse } from '../../lib/responses';
-import { getAddressButtons } from '../../lib/addresses';
 
 async function getResponse(req: NextRequest): Promise<NextResponse> {
   const body: FrameRequest = await req.json();
@@ -32,7 +31,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
               },
             ],
             post_url: `${NEXT_PUBLIC_URL}/api/retry`,
-            image: `${NEXT_PUBLIC_URL}/api/images/check?date=${Date.now()}`,
+            image: `${NEXT_PUBLIC_URL}/api/images/check`,
           }),
         );
       }
@@ -74,7 +73,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
                   },
                 ],
                 post_url: `${NEXT_PUBLIC_URL}/api/check`,
-                image: `${NEXT_PUBLIC_URL}/api/images/check?date=${Date.now()}`,
+                image: `${NEXT_PUBLIC_URL}/api/images/check`,
               }),
             );
           }

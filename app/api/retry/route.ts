@@ -63,7 +63,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
                   },
                 ],
                 post_url: `${NEXT_PUBLIC_URL}/api/check`,
-                image: `${NEXT_PUBLIC_URL}/api/images/check?date=${Date.now()}`,
+                image: `${NEXT_PUBLIC_URL}/api/images/check`,
               }),
             );
           }
