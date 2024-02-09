@@ -10,7 +10,5 @@ export function getFrameHtml(frameMetadata: FrameMetadataType) {
     '<meta property="fc:frame:image:aspect_ratio" content="1:1" />',
   ];
   // hack: remove close tags, add aspect ratio and required OG tags
-  const res = `${html.slice(0, html.length - 14)}${extraTags.join('')}</head></html>`;
-  console.log(res);
-  return res;
+  return `${html.slice(0, html.length - 14)}${extraTags.join('')}</head></html>`;
 }
